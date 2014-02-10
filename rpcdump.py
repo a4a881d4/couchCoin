@@ -6,9 +6,42 @@ import sys
 class rpcdump:
 	def __init__(self,url):	
 		self.s = ServiceProxy("http://%s" % url)
+		self.set2Begin()
+		
+	def set2Begin(self):
+		self.current=self.getHash(0)
+		
+	def next(self):
+		self.current=self.nextBlock(self.current)
+		return self.current
+		
+	def previous(self):
+		self.current=self.previousBlock(self.current)
+		return self.current
+		
+	def set2End(self):
+		self.current=self.getHash(self.getTop())
+	
+	def getTop(self):
+		info = self.s.getinfo()
+		return info['blocks']-1
 		
 	def getHash(self,height):
 		return self.s.getblockhash(height)
+	
+	def nextBlock(self,h):
+		block = self.getBlock(h)
+		if 'nextblockhash' in block:
+			return block['nextblockhash']
+		else:
+			return None
+		
+	def previousBlock(self,h):
+		block = self.getBlock(h)
+		if 'previousblockhash' in block:
+			return block['previousblockhash']
+		else:
+			return None
 		
 	def getBlock(self,h):
 		block = self.s.getblock(h)
@@ -46,7 +79,21 @@ class rpcdump:
 		return None
 
 if __name__=='__main__':
-	rd = rpcdump(sys.argv[1])
-	hash = rd.getHash(int(sys.argv[2]))
-	block = rd.getBlock(hash)
-	print json.dumps(block, sort_keys=True, indent=2 )		
+	from couchAPI import *
+	with open(sys.argv[1]) as json_data:
+		conf = json.load(json_data)
+		json_data.close()
+	db = couchAPI(conf['couchdbuser'],conf['couchdbpass'],conf['couchdburl'])	
+	db.setDB('coinbase')
+	
+	url = "%s:%s@127.0.0.1:%d" % (conf['rpcuser'],conf['rpcpass'],conf['rpcport'])
+	rd = rpcdump(url)
+	
+	hash = rd.next()
+	while( hash!=None ):
+		if db.has(hash):
+			print hash, " OK"
+		else:
+			print hash, " miss"
+			break
+		hash = rd.next()
