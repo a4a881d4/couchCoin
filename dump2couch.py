@@ -14,7 +14,17 @@ class dump2couch:
 	
 	def getHash(self,height):
 		return self.rd.getHash(height)
-		
+	
+	def rebuild(self):
+		hash = self.rd.next()
+		while( hash!=None ):
+			if self.db.has(hash):
+				print hash, " OK"
+			else:
+				print hash, " miss"
+				self.submit(hash)
+			hash = self.rd.next() 	
+	
 	def submit(self,hash):
 		block=self.rd.getBlock(hash)
 		block['cointype']=self.conf['coin']
@@ -45,10 +55,12 @@ if __name__=='__main__':
 		conf = json.load(json_data)
 		json_data.close()
 	worker = dump2couch(conf)
+	worker.rebuild()
+	"""
 	start=int(sys.argv[2])
 	end=int(sys.argv[3])
 	for height in range(start,end):
 		hash=worker.getHash(height)
 		print "Hash(",height,"): ",hash
 		worker.submit(hash)
-		
+	"""	
