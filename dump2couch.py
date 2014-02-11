@@ -24,6 +24,14 @@ class dump2couch:
 				print hash, " miss"
 				self.submit(hash)
 			hash = self.rd.next() 	
+
+	def sync(self):
+		hash = self.rd.set2End()
+		while( not self.db.has(hash) ):
+			print hash, " miss"
+			hash = self.rd.previous()
+		self.rebuild() 	
+
 	
 	def submit(self,hash):
 		block=self.rd.getBlock(hash)
@@ -55,7 +63,7 @@ if __name__=='__main__':
 		conf = json.load(json_data)
 		json_data.close()
 	worker = dump2couch(conf)
-	worker.rebuild()
+	worker.sync()
 	"""
 	start=int(sys.argv[2])
 	end=int(sys.argv[3])
