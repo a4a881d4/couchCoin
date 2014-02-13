@@ -10,6 +10,7 @@ class rpcdump:
 		
 	def set2Begin(self):
 		self.current=self.getHash(0)
+		return self.current
 		
 	def next(self):
 		self.current=self.nextBlock(self.current)
@@ -21,6 +22,7 @@ class rpcdump:
 		
 	def set2End(self):
 		self.current=self.getHash(self.getTop())
+		return self.current
 	
 	def getTop(self):
 		info = self.s.getinfo()

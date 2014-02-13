@@ -15,20 +15,27 @@ class dump2couch:
 	def getHash(self,height):
 		return self.rd.getHash(height)
 	
+	def getHeight(self,hash):
+		block = self.rd.getBlock(hash)
+		if block['type']=='block':
+			return int(block['height'])
+		else:
+			return -1
+			
 	def rebuild(self):
 		hash = self.rd.next()
 		while( hash!=None ):
 			if self.db.has(hash):
 				print hash, " OK"
 			else:
-				print hash, " miss"
+				print "Hash( %8d )" % getHeight(hash), hash, " submit"
 				self.submit(hash)
 			hash = self.rd.next() 	
 
 	def sync(self):
 		hash = self.rd.set2End()
 		while( not self.db.has(hash) ):
-			print hash, " miss"
+			print "Hash( %8d )" % getHeight(hash), hash, " miss"
 			hash = self.rd.previous()
 		self.rebuild() 	
 
