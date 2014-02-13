@@ -28,14 +28,14 @@ class dump2couch:
 			if self.db.has(hash):
 				print hash, " OK"
 			else:
-				print "Hash( %8d )" % getHeight(hash), hash, " submit"
+				print "Hash( %8d )" % self.getHeight(hash), hash, " submit"
 				self.submit(hash)
 			hash = self.rd.next() 	
 
 	def sync(self):
 		hash = self.rd.set2End()
 		while( not self.db.has(hash) ):
-			print "Hash( %8d )" % getHeight(hash), hash, " miss"
+			print "Hash( %8d )" % self.getHeight(hash), hash, " miss"
 			hash = self.rd.previous()
 		self.rebuild() 	
 
