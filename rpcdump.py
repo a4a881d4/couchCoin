@@ -11,7 +11,14 @@ class rpcdump:
 	def set2Begin(self):
 		self.current=self.getHash(0)
 		return self.current
+	
+	def setCurrent(self,h):
+		self.current=self.getHash(h)
+		return self.current
 		
+	def getCurrent(self):
+		return self.current
+			
 	def next(self):
 		self.current=self.nextBlock(self.current)
 		return self.current

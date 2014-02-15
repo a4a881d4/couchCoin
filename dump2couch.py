@@ -2,6 +2,7 @@ from couchAPI import *
 from rpcdump import *
 import json
 import sys
+import getopt
 
 class dump2couch:
 	def __init__(self,conf):
@@ -11,7 +12,17 @@ class dump2couch:
 		self.rd = rpcdump(url)
 		self.db = couchAPI(conf['couchdbuser'],conf['couchdbpass'],conf['couchdburl'])	
 		self.db.setDB('coinbase')
-	
+		hash = self.rd.set2Begin()
+		if not self.db.has(hash):
+			self.submit(hash)
+		self.breakhash=None
+
+	def setBreak(self,h):
+		self.breakhash=self.rd.getHash(h)
+		
+	def setCurrent(self,h):
+		self.rd.setCurrent(h)
+			
 	def getHash(self,height):
 		return self.rd.getHash(height)
 	
@@ -24,7 +35,7 @@ class dump2couch:
 			
 	def rebuild(self):
 		hash = self.rd.next()
-		while( hash!=None ):
+		while( hash!=None and hash!=self.breakhash ):
 			if self.db.has(hash):
 				print hash, " OK"
 			else:
@@ -33,18 +44,20 @@ class dump2couch:
 			hash = self.rd.next() 	
 
 	def sync(self):
-		hash = self.rd.set2End()
+		hash = self.rd.getCurrent()
 		while( not self.db.has(hash) ):
 			print "Hash( %8d )" % self.getHeight(hash), hash, " miss"
 			hash = self.rd.previous()
+			if hash==None:
+				hash = self.rd.set2Begin()
+				break
 		self.rebuild() 	
 
-	
+		
 	def submit(self,hash):
 		block=self.rd.getBlock(hash)
 		block['cointype']=self.conf['coin']
 		print json.dumps(block, sort_keys=True, indent=2 )
-		self.db.save(block)
 		txids = block['tx']
 		for txid in txids:
 			tx=self.rd.getTx(txid)
@@ -63,19 +76,28 @@ class dump2couch:
 						self.db.save(previousTx)
 						print "======update previousTx============"
 						print json.dumps(previousTx, sort_keys=True, indent=2 )
+		self.db.save(block)
+		
 						
 							
 if __name__=='__main__':
-	with open(sys.argv[1]) as json_data:
-		conf = json.load(json_data)
-		json_data.close()
-	worker = dump2couch(conf)
-	worker.sync()
-	"""
-	start=int(sys.argv[2])
-	end=int(sys.argv[3])
-	for height in range(start,end):
-		hash=worker.getHash(height)
-		print "Hash(",height,"): ",hash
-		worker.submit(hash)
-	"""	
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], 'c:s:e:', ['dump', 'check'])
+	except getopt.GetoptError as err:
+		print >> sys.stderr, str(err)
+		sys.exit(1)
+	
+	for opt, arg in opts:
+		if opt == '-c':
+			with open(arg) as json_data:
+				conf = json.load(json_data)
+				json_data.close()
+				worker = dump2couch(conf)
+				worker.rd.set2End()
+		if opt == '-s':
+			worker.setCurrent(int(arg))
+		if opt == '-e':
+			worker.setBreak(int(arg))
+		if opt == '--dump':
+			worker.sync()
+	
