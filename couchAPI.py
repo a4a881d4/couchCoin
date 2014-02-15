@@ -23,7 +23,10 @@ class couchAPI:
 		return doc_id
 		
 	def get(self,doc_id):
-		return self.db[doc_id]
+		try:
+			return self.db[doc_id]
+		except:
+			return None
 		
 	def has(self,doc_id):
 		return doc_id in self.db

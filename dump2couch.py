@@ -70,6 +70,8 @@ class dump2couch:
 				for v in tx['vin']:
 					if 'txid' in v:
 						previousTx=self.db.get(v['txid'])
+						if previousTx==None:
+							break
 						for txout in previousTx['vout']:
 							if v['vout']==txout['n']:
 								txout['spend']=True
