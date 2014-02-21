@@ -98,6 +98,7 @@ class Tx2couch:
 						previousTx=self.db.get(voutid)
 						if previousTx!=None:
 							previousTx['spend']=True
+							previousTx['spendTxid']=txid
 							self.db.save(previousTx)
 							print "======update previousTx============"
 							print json.dumps(previousTx, sort_keys=True, indent=2 )
